@@ -64,12 +64,8 @@ final readonly class RouteRegistry
             // Register redirects defined within the route
             $this->registerRedirects($app, $routeAttribute->redirects, $routeAttribute);
 
-            // Register class as route
-            $route = $app->map($routeAttribute->methods, $routeAttribute->path, $class);
-
-            if ($routeAttribute->name) {
-                $route->setName($routeAttribute->name);
-            }
+            // Register the class as a route
+            $this->registerRoute($app, $routeAttribute, $class, null);
         }
 
         // Register routes on public methods
@@ -99,15 +95,30 @@ final readonly class RouteRegistry
             // Register redirects defined within the route
             $this->registerRedirects($app, $routeAttribute->redirects, $routeAttribute);
 
-            // Register method as route
-            $route = $app->map(
-                $routeAttribute->methods,
-                $routeAttribute->path,
-                sprintf('%s:%s', $class, $method->getName()),
-            );
+            // Register the method as a route
+            $this->registerRoute($app, $routeAttribute, $class, $method->getName());
+        }
+    }
 
-            if ($routeAttribute->name) {
-                $route->setName($routeAttribute->name);
+    /**
+     * @param App<ContainerInterface> $app
+     * @param class-string            $class
+     */
+    private function registerRoute(App $app, Route $routeAttribute, string $class, ?string $method): void
+    {
+        $route = $app->map(
+            $routeAttribute->methods,
+            $routeAttribute->path,
+            $method ? sprintf('%s:%s', $class, $method) : $class,
+        );
+
+        if ($routeAttribute->name) {
+            $route->setName($routeAttribute->name);
+        }
+
+        if ($routeAttribute->middlewares) {
+            foreach ($routeAttribute->middlewares as $middleware) {
+                $route->add($middleware);
             }
         }
     }

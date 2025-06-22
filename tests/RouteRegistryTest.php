@@ -9,6 +9,7 @@ use BlackBonjour\SlimRouteRegistry\RouteRegistry;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use Slim\App;
+use Slim\Routing\Route;
 use Throwable;
 
 final class RouteRegistryTest extends TestCase
@@ -82,5 +83,41 @@ final class RouteRegistryTest extends TestCase
 
         $routeRegistry = new RouteRegistry(['BlackBonjourTest\\SlimRouteRegistry'], $namespaceHandler);
         $routeRegistry->register($this->createMock(App::class));
+    }
+
+    /**
+     * Verifies the registration of routes with middleware support.
+     *
+     * @throws Throwable
+     */
+    public function testRegisterWithMiddleware(): void
+    {
+        $route = $this->createMock(Route::class);
+        $route
+            ->expects($this->once())
+            ->method('add')
+            ->with('BlackBonjourTest\\SlimRouteRegistry\\TestMiddleware');
+
+        $route
+            ->expects($this->once())
+            ->method('setName')
+            ->with('middleware-route');
+
+        $app = $this->createMock(App::class);
+        $app
+            ->expects($this->once())
+            ->method('map')
+            ->with(['GET'], '/middleware', 'BlackBonjourTest\\SlimRouteRegistry\\MiddlewareHandler')
+            ->willReturn($route);
+
+        $namespaceHandler = $this->createMock(NamespaceHandler::class);
+        $namespaceHandler
+            ->expects($this->once())
+            ->method('getClassNamesByNamespace')
+            ->with('BlackBonjourTest\\SlimRouteRegistry')
+            ->willReturn(['BlackBonjourTest\\SlimRouteRegistry\\MiddlewareHandler']);
+
+        $routeRegistry = new RouteRegistry(['BlackBonjourTest\\SlimRouteRegistry'], $namespaceHandler);
+        $routeRegistry->register($app);
     }
 }
