@@ -6,9 +6,9 @@ organized.
 
 ## Requirements
 
-- PHP 8.3 or higher
+- PHP 8.2 or higher
 - Slim Framework 4.14 or higher
-- blackbonjour/namespace-handler 0.1.*
+- composer/class-map-generator 1.6 or higher
 
 ## Installation
 
@@ -52,7 +52,6 @@ In your application bootstrap file:
 ```php
 <?php
 
-use BlackBonjour\NamespaceHandler\NamespaceHandler;
 use BlackBonjour\SlimRouteRegistry\RouteRegistry;
 use Slim\Factory\AppFactory;
 
@@ -61,11 +60,11 @@ require_once __DIR__ . '/vendor/autoload.php';
 // Create Slim App
 $app = AppFactory::create();
 
-// Create RouteRegistry
-$namespaceHandler = new NamespaceHandler();
-$routeRegistry = new RouteRegistry(['App\\Handlers'], $namespaceHandler);
+// Create RouteRegistry with paths to scan for route handlers
+// By default, it uses ComposerClassProvider to find classes in the specified paths
+$routeRegistry = new RouteRegistry([__DIR__ . '/src/Handlers']);
 
-// Register all routes from the specified namespace
+// Register all routes from the specified paths
 $routeRegistry->register($app);
 
 // Run the app
@@ -184,17 +183,47 @@ class NewPathHandler
 The main class responsible for registering routes.
 
 ```php
-public function __construct(array $namespaces, NamespaceHandler $namespaceHandler)
+public function __construct(array $paths, ClassProviderInterface $classProvider = new ComposerClassProvider())
 ```
 
-- `$namespaces`: Array of namespace strings to scan for route handlers
-- `$namespaceHandler`: Instance of `BlackBonjour\NamespaceHandler\NamespaceHandler`
+- `$paths`: Array of directory paths to scan for route handler classes
+- `$classProvider`: Instance of `ClassProviderInterface` (defaults to `ComposerClassProvider`)
 
 ```php
 public function register(App $app): void
 ```
 
 - `$app`: Slim Framework App instance
+
+### ClassProviderInterface
+
+An interface for classes that provide a list of class names from a given path.
+
+```php
+public function provideClasses(string $path): array
+```
+
+- `$path`: Directory path to scan for classes
+- Returns: Array of fully qualified class names
+
+### ComposerClassProvider
+
+The default implementation of `ClassProviderInterface` that uses Composer's ClassMapGenerator to find classes.
+
+```php
+public function __construct(ClassMapGenerator $classMapGenerator = new ClassMapGenerator())
+```
+
+- `$classMapGenerator`: Optional custom instance of Composer's ClassMapGenerator (defaults to a new instance)
+
+```php
+public function provideClasses(string $path): array
+```
+
+- `$path`: Directory path to scan for classes
+- Returns: Array of fully qualified class names found in the path
+- Throws: `DirectoryNotFoundExceptionClass` if the path is not a valid directory
+- Throws: `ClassMapGeneratorExceptionClass` if the ClassMapGenerator encounters an error
 
 ### Route Attribute
 
