@@ -42,6 +42,10 @@
   "prefer-stable": true,
   "scripts": {
     "test": "phpunit --color=always tests",
-    "phpstan": "phpstan analyse src --level=max"
+    "phpstan": "phpstan analyse src --level=max",
+    "pre-commit": [
+      "@test",
+      "@phpstan"
+    ]
   }
 }
