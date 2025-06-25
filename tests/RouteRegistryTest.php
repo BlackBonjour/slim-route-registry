@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace BlackBonjourTest\SlimRouteRegistry;
 
-use BlackBonjour\NamespaceHandler\NamespaceHandler;
+use BlackBonjour\SlimRouteRegistry\Contract\ClassProviderInterface;
+use BlackBonjour\SlimRouteRegistry\Exception\RedirectExceptionRoute;
 use BlackBonjour\SlimRouteRegistry\RouteRegistry;
-use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use Slim\App;
 use Slim\Routing\Route;
@@ -15,7 +15,7 @@ use Throwable;
 final class RouteRegistryTest extends TestCase
 {
     /**
-     * Verifies the registration of routes and handlers within a specified namespace.
+     * Verifies the registration of routes and handlers within a specified directory path.
      *
      * @throws Throwable
      */
@@ -32,61 +32,61 @@ final class RouteRegistryTest extends TestCase
             ->method('redirect')
             ->with('/old', '/new', 302);
 
-        $namespaceHandler = $this->createMock(NamespaceHandler::class);
-        $namespaceHandler
+        $classProvider = $this->createMock(ClassProviderInterface::class);
+        $classProvider
             ->expects($this->once())
-            ->method('getClassNamesByNamespace')
-            ->with('BlackBonjourTest\\SlimRouteRegistry')
+            ->method('provideClasses')
+            ->with('tests')
             ->willReturn(['BlackBonjourTest\\SlimRouteRegistry\\ExampleHandler']);
 
-        $routeRegistry = new RouteRegistry(['BlackBonjourTest\\SlimRouteRegistry'], $namespaceHandler);
+        $routeRegistry = new RouteRegistry(['tests'], $classProvider);
         $routeRegistry->register($app);
     }
 
     /**
-     * Verifies the behavior of the RouteRegistry when attempting to register classes in a namespace that contains no classes.
+     * Verifies the behavior of the RouteRegistry when attempting to register classes in a directory path that contains no classes.
      *
      * @throws Throwable
      */
-    public function testRegisterNoClassesInNamespace(): void
+    public function testRegisterNoClassesInDirectory(): void
     {
-        $namespaceHandler = $this->createMock(NamespaceHandler::class);
-        $namespaceHandler
+        $classProvider = $this->createMock(ClassProviderInterface::class);
+        $classProvider
             ->expects($this->once())
-            ->method('getClassNamesByNamespace')
-            ->with('TestNamespace')
+            ->method('provideClasses')
+            ->with('tests/TestDirectory')
             ->willReturn([]);
 
-        $routeRegistry = new RouteRegistry(['TestNamespace'], $namespaceHandler);
+        $routeRegistry = new RouteRegistry(['tests/TestDirectory'], $classProvider);
         $routeRegistry->register($this->createMock(App::class));
     }
 
     /**
-     * Verifies that an exception is thrown when attempting to register a route with an invalid redirect.
+     * Verifies that an exception is thrown when attempting to register a route with an invalid redirect from a directory path.
      *
      * @throws Throwable
      */
     public function testRegisterThrowsExceptionForInvalidRedirect(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(RedirectExceptionRoute::class);
         $this->expectExceptionCode(0);
         $this->expectExceptionMessage(
-            'Redirect attribute requires a "to" parameter unless attached to a Route attribute!',
+            'The redirect attribute for "/old" requires a "to" parameter unless it is attached to a route attribute.',
         );
 
-        $namespaceHandler = $this->createMock(NamespaceHandler::class);
-        $namespaceHandler
+        $classProvider = $this->createMock(ClassProviderInterface::class);
+        $classProvider
             ->expects($this->once())
-            ->method('getClassNamesByNamespace')
-            ->with('BlackBonjourTest\\SlimRouteRegistry')
+            ->method('provideClasses')
+            ->with('tests')
             ->willReturn(['BlackBonjourTest\\SlimRouteRegistry\\InvalidRedirectHandler']);
 
-        $routeRegistry = new RouteRegistry(['BlackBonjourTest\\SlimRouteRegistry'], $namespaceHandler);
+        $routeRegistry = new RouteRegistry(['tests'], $classProvider);
         $routeRegistry->register($this->createMock(App::class));
     }
 
     /**
-     * Verifies the registration of routes with `arguments` support.
+     * Verifies the registration of routes with `arguments` support from a directory path.
      *
      * @throws Throwable
      */
@@ -110,19 +110,19 @@ final class RouteRegistryTest extends TestCase
             ->with(['GET'], '/arguments', 'BlackBonjourTest\\SlimRouteRegistry\\ArgumentsHandler')
             ->willReturn($route);
 
-        $namespaceHandler = $this->createMock(NamespaceHandler::class);
-        $namespaceHandler
+        $classProvider = $this->createMock(ClassProviderInterface::class);
+        $classProvider
             ->expects($this->once())
-            ->method('getClassNamesByNamespace')
-            ->with('BlackBonjourTest\\SlimRouteRegistry')
+            ->method('provideClasses')
+            ->with('tests')
             ->willReturn(['BlackBonjourTest\\SlimRouteRegistry\\ArgumentsHandler']);
 
-        $routeRegistry = new RouteRegistry(['BlackBonjourTest\\SlimRouteRegistry'], $namespaceHandler);
+        $routeRegistry = new RouteRegistry(['tests'], $classProvider);
         $routeRegistry->register($app);
     }
 
     /**
-     * Verifies that no arguments are set when the `arguments` array is empty.
+     * Verifies that no arguments are set when the `arguments` array is empty for routes from a directory path.
      *
      * @throws Throwable
      */
@@ -138,19 +138,19 @@ final class RouteRegistryTest extends TestCase
             ->with(['GET'], '/', 'BlackBonjourTest\\SlimRouteRegistry\\ExampleHandler')
             ->willReturn($route);
 
-        $namespaceHandler = $this->createMock(NamespaceHandler::class);
-        $namespaceHandler
+        $classProvider = $this->createMock(ClassProviderInterface::class);
+        $classProvider
             ->expects($this->once())
-            ->method('getClassNamesByNamespace')
-            ->with('BlackBonjourTest\\SlimRouteRegistry')
+            ->method('provideClasses')
+            ->with('tests')
             ->willReturn(['BlackBonjourTest\\SlimRouteRegistry\\ExampleHandler']);
 
-        $routeRegistry = new RouteRegistry(['BlackBonjourTest\\SlimRouteRegistry'], $namespaceHandler);
+        $routeRegistry = new RouteRegistry(['tests'], $classProvider);
         $routeRegistry->register($app);
     }
 
     /**
-     * Verifies the registration of routes with middleware support.
+     * Verifies the registration of routes with middleware support from a directory path.
      *
      * @throws Throwable
      */
@@ -174,14 +174,14 @@ final class RouteRegistryTest extends TestCase
             ->with(['GET'], '/middleware', 'BlackBonjourTest\\SlimRouteRegistry\\MiddlewareHandler')
             ->willReturn($route);
 
-        $namespaceHandler = $this->createMock(NamespaceHandler::class);
-        $namespaceHandler
+        $classProvider = $this->createMock(ClassProviderInterface::class);
+        $classProvider
             ->expects($this->once())
-            ->method('getClassNamesByNamespace')
-            ->with('BlackBonjourTest\\SlimRouteRegistry')
+            ->method('provideClasses')
+            ->with('tests')
             ->willReturn(['BlackBonjourTest\\SlimRouteRegistry\\MiddlewareHandler']);
 
-        $routeRegistry = new RouteRegistry(['BlackBonjourTest\\SlimRouteRegistry'], $namespaceHandler);
+        $routeRegistry = new RouteRegistry(['tests'], $classProvider);
         $routeRegistry->register($app);
     }
 }

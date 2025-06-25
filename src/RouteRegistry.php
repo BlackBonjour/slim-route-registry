@@ -4,37 +4,34 @@ declare(strict_types=1);
 
 namespace BlackBonjour\SlimRouteRegistry;
 
-use BlackBonjour\NamespaceHandler\NamespaceHandler;
-use InvalidArgumentException;
+use BlackBonjour\SlimRouteRegistry\Contract\ClassProviderInterface;
+use BlackBonjour\SlimRouteRegistry\Contract\RouteRegistryInterface;
+use BlackBonjour\SlimRouteRegistry\Exception\ClassReflectionException;
+use BlackBonjour\SlimRouteRegistry\Exception\RedirectExceptionRoute;
 use Psr\Container\ContainerInterface;
 use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionMethod;
-use RuntimeException;
 use Slim\App;
 
-final readonly class RouteRegistry
+/**
+ * @implements RouteRegistryInterface<ContainerInterface>
+ */
+final readonly class RouteRegistry implements RouteRegistryInterface
 {
     /**
-     * @param array<string> $namespaces
+     * @param array<string> $paths
      */
     public function __construct(
-        private array $namespaces,
-        private NamespaceHandler $namespaceHandler,
+        private array $paths,
+        private ClassProviderInterface $classProvider = new ComposerClassProvider(),
     ) {}
 
-    /**
-     * @param App<ContainerInterface> $app
-     *
-     * @throws InvalidArgumentException
-     * @throws ReflectionException
-     * @throws RuntimeException
-     */
     public function register(App $app): void
     {
-        foreach ($this->namespaces as $namespace) {
-            foreach ($this->namespaceHandler->getClassNamesByNamespace($namespace) as $class) {
+        foreach ($this->paths as $path) {
+            foreach ($this->classProvider->provideClasses($path) as $class) {
                 $this->registerClassRoutes($app, $class);
             }
         }
@@ -44,12 +41,16 @@ final readonly class RouteRegistry
      * @param App<ContainerInterface> $app
      * @param class-string            $class
      *
-     * @throws InvalidArgumentException
-     * @throws ReflectionException
+     * @throws ClassReflectionException
+     * @throws RedirectExceptionRoute
      */
     private function registerClassRoutes(App $app, string $class): void
     {
-        $reflectionClass = new ReflectionClass($class);
+        try {
+            $reflectionClass = new ReflectionClass($class);
+        } catch (ReflectionException $e) {
+            throw ClassReflectionException::fromClass($class, $e);
+        }
 
         // Register redirects defined on the class before registering actual routes
         $this->registerRedirects($app, $reflectionClass->getAttributes(Redirect::class));
@@ -78,7 +79,7 @@ final readonly class RouteRegistry
      * @param App<ContainerInterface> $app
      * @param class-string            $class
      *
-     * @throws InvalidArgumentException
+     * @throws RedirectExceptionRoute
      */
     private function registerMethodRoutes(App $app, string $class, ReflectionMethod $method): void
     {
@@ -131,7 +132,7 @@ final readonly class RouteRegistry
      * @param App<ContainerInterface>                       $app
      * @param array<ReflectionAttribute<Redirect>|Redirect> $attributes
      *
-     * @throws InvalidArgumentException
+     * @throws RedirectExceptionRoute
      */
     private function registerRedirects(App $app, array $attributes, ?Route $route = null): void
     {
@@ -146,9 +147,7 @@ final readonly class RouteRegistry
             $to = $redirect->to ?? $route?->path;
 
             if ($to === null) {
-                throw new InvalidArgumentException(
-                    'Redirect attribute requires a "to" parameter unless attached to a Route attribute!',
-                );
+                throw RedirectExceptionRoute::fromRedirect($redirect);
             }
 
             $app->redirect($redirect->from, $to, $redirect->status);
