@@ -48,7 +48,7 @@ final readonly class RouteRegistry implements RouteRegistryInterface
     {
         try {
             $reflectionClass = new ReflectionClass($class);
-        } catch (ReflectionException $e) {
+        } catch (/** @phpstan-ignore-line */ ReflectionException $e) {
             throw ClassReflectionException::fromClass($class, $e);
         }
 

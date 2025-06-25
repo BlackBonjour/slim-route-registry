@@ -15,7 +15,7 @@ final readonly class Route
 
     /**
      * @param array<string>|string                      $methods
-     * @param array<string, mixed>                      $arguments
+     * @param array<string, string>                     $arguments
      * @param list<MiddlewareInterface|callable|string> $middlewares
      * @param array<Redirect>                           $redirects
      */

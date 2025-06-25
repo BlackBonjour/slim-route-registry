@@ -1,7 +1,12 @@
 {
   "name": "blackbonjour/slim-route-registry",
-  "description": "Foo Bar",
-  "minimum-stability": "stable",
+  "description": "Attribute based route registry for Slim 4.",
+  "type": "library",
+  "keywords": [
+    "slim",
+    "routing",
+    "attribute"
+  ],
   "license": "MIT",
   "authors": [
     {
@@ -9,14 +14,16 @@
       "email": "info@erickdyck.de"
     }
   ],
+  "support": {
+    "issues": "https://github.com/BlackBonjour/slim-route-registry/issues",
+    "source": "https://github.com/BlackBonjour/slim-route-registry"
+  },
   "require": {
-    "php": "^8.3",
-    "composer/class-map-generator": "^1.0",
-    "slim/slim": "^4.0"
+    "php": "^8.2",
+    "composer/class-map-generator": "^1.6",
+    "slim/slim": "^4.14"
   },
   "require-dev": {
-    "friendsofphp/php-cs-fixer": "*",
-    "phpmd/phpmd": "*",
     "phpstan/phpstan": "*",
     "phpunit/phpunit": "^12.0",
     "roave/security-advisories": "dev-latest"
@@ -30,5 +37,11 @@
     "psr-4": {
       "BlackBonjourTest\\SlimRouteRegistry\\": "tests"
     }
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true,
+  "scripts": {
+    "test": "phpunit --color=always tests",
+    "phpstan": "phpstan analyse src --level=max"
   }
 }
