@@ -15,6 +15,7 @@ final readonly class Route
 
     /**
      * @param array<string>|string                      $methods
+     * @param array<string, mixed>                      $arguments
      * @param list<MiddlewareInterface|callable|string> $middlewares
      * @param array<Redirect>                           $redirects
      */
@@ -22,6 +23,7 @@ final readonly class Route
         array|string $methods,
         public string $path,
         public ?string $name = null,
+        public array $arguments = [],
         public array $middlewares = [],
         public array $redirects = [],
     ) {

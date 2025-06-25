@@ -112,14 +112,18 @@ final readonly class RouteRegistry
             $method ? sprintf('%s:%s', $class, $method) : $class,
         );
 
-        if ($routeAttribute->name) {
-            $route->setName($routeAttribute->name);
+        if ($routeAttribute->arguments) {
+            $route->setArguments($routeAttribute->arguments);
         }
 
         if ($routeAttribute->middlewares) {
             foreach ($routeAttribute->middlewares as $middleware) {
                 $route->add($middleware);
             }
+        }
+
+        if ($routeAttribute->name) {
+            $route->setName($routeAttribute->name);
         }
     }
 

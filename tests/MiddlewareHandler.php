@@ -9,5 +9,5 @@ use BlackBonjour\SlimRouteRegistry\Route;
 /**
  * Example handler with middleware support for testing.
  */
-#[Route('GET', '/middleware', 'middleware-route', [TestMiddleware::class])]
+#[Route('GET', '/middleware', 'middleware-route', middlewares: [TestMiddleware::class])]
 final class MiddlewareHandler {}

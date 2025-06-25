@@ -121,12 +121,26 @@ class UserHandler
 }
 ```
 
+### Route Arguments
+
+You can pass additional arguments to your routes:
+
+```php
+#[Route('GET', '/api/users', 'users-list', arguments: ['version' => 'v1', 'cache' => true])]
+class UsersListHandler
+{
+    // ...
+}
+```
+
+These arguments can be used to configure the route or provide additional data to the handler.
+
 ### Middleware
 
 You can attach middleware to your routes:
 
 ```php
-#[Route('GET', '/secure', 'secure-area', [AuthMiddleware::class])]
+#[Route('GET', '/secure', 'secure-area', middlewares: [AuthMiddleware::class])]
 class SecureAreaHandler
 {
     // ...
@@ -190,6 +204,7 @@ public function __construct(
     array|string $methods,
     string $path,
     ?string $name = null,
+    array $arguments = [],
     array $middlewares = [],
     array $redirects = []
 )
@@ -198,6 +213,7 @@ public function __construct(
 - `$methods`: HTTP method(s) as string or array of strings (e.g., 'GET', ['GET', 'POST'])
 - `$path`: URL path pattern (e.g., '/users/{id}')
 - `$name`: Optional route name for URL generation
+- `$arguments`: Array of key-value pairs to be passed to the route
 - `$middlewares`: Array of middleware classes, callables, or string class names
 - `$redirects`: Array of Redirect objects
 
